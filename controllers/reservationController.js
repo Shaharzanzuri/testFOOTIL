@@ -34,8 +34,40 @@ exports.createReservation = async (req, res, next) => {
   });
 };
 
-exports.getReservation = (req, res, next) => {};
+exports.getBrandSales = async (req, res, next) => {
+  try {
+    const brandSales = await Reservation.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "products",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      { $unwind: "$productDetails" },
+      { $group: { _id: "$productDetails.company", count: { $sum: 1 } } }
+    ]);
 
-exports.updateReservation = (req, res, next) => {};
+    let result = {};
+    brandSales.forEach(item => {
+      result[item._id] = item.count;
+    });
 
-exports.deleteReservation = (req, res, next) => {};
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error("Error fetching brand sales data", error);
+    res.status(500).json({ status: "fail", message: "Internal server error" });
+  }
+};
+
+exports.getReservation = (req, res, next) => { };
+
+exports.getBrandSales = (req, res, next) => { };
+
+
+exports.updateReservation = (req, res, next) => { };
+
+exports.deleteReservation = (req, res, next) => { };
